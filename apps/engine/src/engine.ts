@@ -146,7 +146,7 @@ export class BridgeEngine {
         autoExecute = settings.autoExecute;
         this.cooldownMs = settings.cooldownMs;
         // DB manualApproval overrides CLI flag when explicitly set
-        manualApproval = (settings as Record<string, unknown>).manualApproval as boolean ?? manualApproval;
+        manualApproval = (settings as Record<string, unknown>).manualApproval as boolean ?? true;
       }
     } catch {
       // Table may not exist yet — default to autoExecute=false

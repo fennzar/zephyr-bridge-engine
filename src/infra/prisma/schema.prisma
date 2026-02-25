@@ -292,7 +292,7 @@ model InventoryBalance {
 model EngineSettings {
   id             String   @id @default("singleton")
   autoExecute    Boolean  @default(false)
-  manualApproval Boolean  @default(false)
+  manualApproval Boolean  @default(true)
   cooldownMs     Int      @default(60000)
   updatedAt      DateTime @updatedAt
   createdAt      DateTime @default(now())

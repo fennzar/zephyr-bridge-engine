@@ -1,4 +1,5 @@
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 import type { CSSProperties } from 'react';
 import { evm, type PositionOverview } from '@services';
 import { colors, styles } from '@/components/theme';

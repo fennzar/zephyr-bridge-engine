@@ -21,7 +21,7 @@
     "watcher:run": "tsx apps/watchers/src/index.ts run",
     "engine": "tsx apps/engine/src/cli.ts",
     "engine:run": "tsx apps/engine/src/cli.ts run",
-    "engine:run:manual": "tsx apps/engine/src/cli.ts run --manual",
+    "engine:run:auto": "tsx apps/engine/src/cli.ts run --auto",
     "engine:eval": "tsx apps/engine/src/cli.ts evaluate",
     "db:generate": "./scripts/prisma-with-env.sh generate --schema src/infra/prisma/schema.prisma",
     "db:migrate": "./scripts/prisma-with-env.sh migrate dev --schema src/infra/prisma/schema.prisma",

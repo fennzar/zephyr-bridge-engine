@@ -19,7 +19,7 @@ program
   .command("run")
   .description("Start the bridge engine")
   .option("--mode <mode>", "Execution mode: paper | devnet | live", "devnet")
-  .option("--manual", "Require manual approval for all operations", false)
+  .option("--auto", "Auto-execute operations that pass risk checks", false)
   .option(
     "--strategies <list>",
     "Comma-separated strategies to enable",
@@ -38,7 +38,7 @@ program
   .action(async (opts) => {
     const config: EngineConfig = {
       mode: opts.mode as ExecutionMode,
-      manualApproval: opts.manual,
+      manualApproval: !opts.auto,
       strategies: opts.strategies.split(",").map((s: string) => s.trim()),
       loopIntervalMs: parseInt(opts.interval, 10),
       cooldownMs: parseInt(opts.cooldown, 10),
@@ -55,7 +55,7 @@ program
     console.log("║       ZEPHYR BRIDGE ENGINE                 ║");
     console.log("╠════════════════════════════════════════════╣");
     console.log(`║  Mode:       ${modeLabel.padEnd(28)}║`);
-    console.log(`║  Manual:     ${String(config.manualApproval).padEnd(28)}║`);
+    console.log(`║  Approval:   ${(config.manualApproval ? "manual" : "auto").padEnd(28)}║`);
     console.log(`║  Strategies: ${config.strategies.join(", ").padEnd(28)}║`);
     console.log(`║  Interval:   ${(config.loopIntervalMs + "ms").padEnd(28)}║`);
     console.log(`║  Cooldown:   ${(config.cooldownMs + "ms").padEnd(28)}║`);

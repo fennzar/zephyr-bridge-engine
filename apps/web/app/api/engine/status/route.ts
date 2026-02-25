@@ -35,7 +35,7 @@ export async function GET() {
     }
 
     // Fetch runner settings
-    let runner = { autoExecute: false, manualApproval: false, cooldownMs: 60000 };
+    let runner = { autoExecute: false, manualApproval: true, cooldownMs: 60000 };
     try {
       const settings = await prisma.engineSettings.upsert({
         where: { id: "singleton" },
@@ -44,7 +44,7 @@ export async function GET() {
       });
       runner = {
         autoExecute: settings.autoExecute,
-        manualApproval: (settings as Record<string, unknown>).manualApproval as boolean ?? false,
+        manualApproval: (settings as Record<string, unknown>).manualApproval as boolean ?? true,
         cooldownMs: settings.cooldownMs,
       };
     } catch {

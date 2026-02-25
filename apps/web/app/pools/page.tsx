@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { env } from "@shared";
 import type { Address } from "viem";
 import {
