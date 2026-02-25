@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "chainId": 1,
+  "contracts": {
+    "poolManager": "0x000000000004444c5dc75cB358380D2e3dE08A90",
+    "positionManager": "0xbd216513d74c8cf14cf4747e6aaa6420ff64ee9e",
+    "stateView": "0x7ffe42c4a5deea5b0fec41c94c136cf115597227",
+    "v4Quoter": "0x52f0e24d1c21c8a0cb1e5a5dd6198556bd9e1203",
+    "swapRouter": "0x66a9893cc07d91d95644aedd05d03f95e1dba8af",
+    "permit2": "0x000000000022D473030F116dDEE9F6B43aC78BA3"
+  },
+  "tokens": {
+    "USDC": {
+      "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      "decimals": 6,
+      "symbol": "USDC",
+      "name": "USD Coin"
+    },
+    "USDT": {
+      "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+      "decimals": 6,
+      "symbol": "USDT",
+      "name": "Tether USD"
+    },
+    "WZEPH": {
+      "address": "0x0000000000000000000000000000000000000000",
+      "decimals": 12,
+      "symbol": "WZEPH",
+      "name": "Wrapped Zephyr"
+    },
+    "WZSD": {
+      "address": "0x0000000000000000000000000000000000000000",
+      "decimals": 12,
+      "symbol": "WZSD",
+      "name": "Wrapped Zephyr Stable Dollar"
+    },
+    "WZYS": {
+      "address": "0x0000000000000000000000000000000000000000",
+      "decimals": 12,
+      "symbol": "WZYS",
+      "name": "Wrapped Zephyr Yield Stable"
+    },
+    "WZRS": {
+      "address": "0x0000000000000000000000000000000000000000",
+      "decimals": 12,
+      "symbol": "WZRS",
+      "name": "Wrapped Zephyr Reserve Stable"
+    }
+  }
+}
