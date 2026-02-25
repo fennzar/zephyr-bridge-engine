@@ -1,0 +1,323 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PoolProtocol {
+  UNISWAP_V3
+  UNISWAP_V4
+  PANCAKE_V3
+  CUSTOM
+}
+
+model Token {
+  id        String   @id @default(cuid())
+  chainId   Int
+  address   String
+  symbol    String?
+  name      String?
+  decimals  Int
+  metadata  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pools0 Pool[] @relation("Token0")
+  pools1 Pool[] @relation("Token1")
+
+  @@unique([chainId, address])
+  @@index([symbol])
+}
+
+model Pool {
+  id                String        @id @default(cuid())
+  chainId           Int
+  protocol          PoolProtocol
+  address           String
+  factoryAddress    String?
+  token0Id          String
+  token1Id          String
+  feeTierBps        Int?
+  tickSpacing       Int?
+  createdBlock      BigInt?       @db.BigInt
+  discoveredAt      DateTime      @default(now())
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  metadata          Json?
+
+  token0            Token         @relation("Token0", fields: [token0Id], references: [id])
+  token1            Token         @relation("Token1", fields: [token1Id], references: [id])
+  states            PoolStateSnapshot[]
+  discoveryEvents   PoolDiscoveryEvent[]
+  cursors           ScanCursor[]
+  positions         Position[]
+  swaps             SwapEvent[]
+
+  @@unique([chainId, protocol, address])
+  @@index([token0Id])
+  @@index([token1Id])
+}
+
+model PoolStateSnapshot {
+  id               String   @id @default(cuid())
+  poolId           String
+  blockNumber      BigInt   @db.BigInt
+  blockTimestamp   DateTime
+  liquidity        Decimal? @db.Decimal(65, 30)
+  sqrtPriceX96     Decimal? @db.Decimal(65, 30)
+  tick             Int?
+  volumeUsd24h     Decimal? @db.Decimal(40, 10)
+  totalValueLocked Decimal? @db.Decimal(65, 30)
+  feeGrowth0       Decimal? @db.Decimal(65, 30)
+  feeGrowth1       Decimal? @db.Decimal(65, 30)
+  reserves0        Decimal? @db.Decimal(65, 30)
+  reserves1        Decimal? @db.Decimal(65, 30)
+  metadata         Json?
+  createdAt        DateTime @default(now())
+
+  pool             Pool     @relation(fields: [poolId], references: [id])
+
+  @@unique([poolId, blockNumber])
+  @@index([blockNumber])
+}
+
+model ScanCursor {
+  id             String   @id @default(cuid())
+  poolId         String?
+  chainId        Int?
+  protocol       PoolProtocol? 
+  task           String
+  cursorKey      String
+  lastBlock      BigInt?  @db.BigInt
+  lastLogIndex   Int?
+  lastTxHash     String?
+  lastTimestamp  DateTime?
+  metadata       Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  pool           Pool?    @relation(fields: [poolId], references: [id])
+
+  @@unique([cursorKey])
+  @@index([task, protocol, chainId])
+}
+
+model PoolDiscoveryEvent {
+  id             String   @id @default(cuid())
+  poolId         String?
+  chainId        Int
+  protocol       PoolProtocol
+  factoryAddress String?
+  txHash         String
+  blockNumber    BigInt   @db.BigInt
+  blockTimestamp DateTime
+  logIndex       Int?
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  pool           Pool?    @relation(fields: [poolId], references: [id])
+
+  @@unique([txHash, logIndex])
+  @@index([chainId, protocol, blockNumber])
+}
+
+model SwapEvent {
+  id             String   @id @default(cuid())
+  poolId         String
+  chainId        Int
+  protocol       PoolProtocol
+  sender         String
+  amount0        Decimal  @db.Decimal(65, 30)
+  amount1        Decimal  @db.Decimal(65, 30)
+  sqrtPriceX96   Decimal  @db.Decimal(65, 30)
+  liquidity      Decimal  @db.Decimal(65, 30)
+  tick           Int
+  fee            Int
+  txHash         String
+  logIndex       Int
+  blockNumber    BigInt   @db.BigInt
+  blockTimestamp DateTime
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  pool Pool @relation(fields: [poolId], references: [id])
+
+  @@unique([txHash, logIndex])
+  @@index([poolId, blockNumber])
+}
+
+model Position {
+  id               String   @id @default(cuid())
+  chainId          Int
+  protocol         PoolProtocol
+  poolId           String
+  owner            String
+  tickLower        Int
+  tickUpper        Int
+  liquidity        Decimal?  @db.Decimal(65, 30)
+  amount0          Decimal?  @db.Decimal(65, 30)
+  amount1          Decimal?  @db.Decimal(65, 30)
+  fees0            Decimal?  @db.Decimal(65, 30)
+  fees1            Decimal?  @db.Decimal(65, 30)
+  lastUpdatedBlock BigInt?   @db.BigInt
+  lastUpdatedAt    DateTime?
+  metadata         Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  pool             Pool     @relation(fields: [poolId], references: [id])
+  snapshots        PositionSnapshot[]
+
+  @@unique([chainId, protocol, owner, poolId, tickLower, tickUpper])
+  @@index([chainId, protocol, owner])
+  @@index([poolId])
+}
+
+model PositionSnapshot {
+  id           String   @id @default(cuid())
+  positionId   String
+  blockNumber  BigInt   @db.BigInt
+  blockTimestamp DateTime
+  liquidity    Decimal? @db.Decimal(65, 30)
+  amount0      Decimal? @db.Decimal(65, 30)
+  amount1      Decimal? @db.Decimal(65, 30)
+  fees0        Decimal? @db.Decimal(65, 30)
+  fees1        Decimal? @db.Decimal(65, 30)
+  metadata     Json?
+  createdAt    DateTime @default(now())
+
+  position     Position @relation(fields: [positionId], references: [id])
+
+  @@unique([positionId, blockNumber])
+  @@index([blockNumber])
+}
+
+// =============================================================================
+// Bridge Engine Models
+// =============================================================================
+
+// Market data snapshots from MEXC watcher
+model MarketSnapshot {
+  id          String   @id @default(cuid())
+  symbol      String   // "ZEPHUSDT"
+  bid         Decimal  @db.Decimal(20, 8)
+  ask         Decimal  @db.Decimal(20, 8)
+  bidQty      Decimal? @db.Decimal(30, 12)
+  askQty      Decimal? @db.Decimal(30, 12)
+  depth       Json?    // Top N levels { bids: [[price, qty]], asks: [[price, qty]] }
+  capturedAt  DateTime @default(now())
+
+  @@index([symbol, capturedAt])
+  @@index([capturedAt])
+}
+
+// Zephyr reserve state snapshots
+model ReserveSnapshot {
+  id                      String   @id @default(cuid())
+  height                  BigInt   @db.BigInt
+  reserveRatio            Decimal  @db.Decimal(10, 4)
+  reserveRatioMa          Decimal  @db.Decimal(10, 4)
+  zephPriceUsd            Decimal  @db.Decimal(20, 8)
+  zephPriceMa             Decimal? @db.Decimal(20, 8)
+  zsdMintable             Boolean
+  zsdRedeemable           Boolean
+  zrsMintable             Boolean
+  zrsRedeemable           Boolean
+  zsdCirc                 Decimal? @db.Decimal(30, 12)
+  zrsCirc                 Decimal? @db.Decimal(30, 12)
+  zysCirc                 Decimal? @db.Decimal(30, 12)
+  zephInReserve           Decimal? @db.Decimal(30, 12)
+  capturedAt              DateTime @default(now())
+
+  @@index([height])
+  @@index([capturedAt])
+}
+
+// Operation queue for manual approval workflow
+model OperationQueue {
+  id           String    @id @default(cuid())
+  strategy     String    // "arb", "rebalance", "peg", "lp"
+  status       String    @default("pending") // pending, approved, executing, completed, failed, rejected
+  priority     Int       @default(0)
+  plan         Json      // Serialized OperationPlan
+  createdAt    DateTime  @default(now())
+  approvedAt   DateTime?
+  approvedBy   String?   // User/system that approved
+  executedAt   DateTime?
+  result       Json?
+  error        String?
+
+  @@index([status, priority])
+  @@index([strategy, createdAt])
+}
+
+// Execution history for audit trail
+model ExecutionHistory {
+  id           String   @id @default(cuid())
+  operationId  String?  // Reference to OperationQueue if came from queue
+  strategy     String
+  mode         String   // "paper", "devnet", "live"
+  plan         Json
+  result       Json
+  stepResults  Json?    // Individual step results
+  startedAt    DateTime
+  completedAt  DateTime
+  durationMs   Int?
+  netPnlUsd    Decimal? @db.Decimal(20, 8)
+  gasUsed      Decimal? @db.Decimal(30, 0)
+
+  @@index([strategy, startedAt])
+  @@index([mode, startedAt])
+}
+
+// Real-time inventory by venue
+model InventoryBalance {
+  id        String   @id @default(cuid())
+  assetId   String   // "WZEPH.e", "ZEPH.n", "ZEPH.x", etc.
+  venue     String   // "evm", "native", "cex"
+  amount    Decimal  @db.Decimal(30, 12)
+  valueUsd  Decimal? @db.Decimal(20, 8)
+  source    String?  // Where this balance came from (wallet address, etc.)
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@unique([assetId, venue])
+  @@index([venue])
+}
+
+// Engine runner settings (singleton row)
+model EngineSettings {
+  id             String   @id @default("singleton")
+  autoExecute    Boolean  @default(false)
+  manualApproval Boolean  @default(false)
+  cooldownMs     Int      @default(60000)
+  updatedAt      DateTime @updatedAt
+  createdAt      DateTime @default(now())
+}
+
+// LP position tracking (for LP Manager strategy)
+model LPPosition {
+  id              String   @id @default(cuid())
+  poolId          String
+  chainId         Int
+  owner           String
+  tickLower       Int
+  tickUpper       Int
+  liquidity       Decimal  @db.Decimal(65, 30)
+  token0Amount    Decimal? @db.Decimal(30, 12)
+  token1Amount    Decimal? @db.Decimal(30, 12)
+  fees0Unclaimed  Decimal? @db.Decimal(30, 12)
+  fees1Unclaimed  Decimal? @db.Decimal(30, 12)
+  status          String   @default("active") // active, closed, pending
+  targetMode      String?  // "normal", "defensive", "aggressive"
+  lastRebalanceAt DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([poolId, owner, tickLower, tickUpper])
+  @@index([poolId, status])
+  @@index([owner])
+}
