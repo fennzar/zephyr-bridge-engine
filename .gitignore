@@ -1,0 +1,51 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.pid.lock
+tmp/
+temp/
+
+# Dependency directories
+node_modules/
+.pnpm/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+coverage/
+
+# TypeScript
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Editors and tooling
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+dump/
+*.Zone.Identifier
+
+data/paper-balances.json
+**/__structure.review.md
+scripts/seed-devnet.sh
+CLAUDE.md

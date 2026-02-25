@@ -1,0 +1,62 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "preserve",
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./*"
+      ],
+      "@shared": [
+        "../../src/shared/index.ts"
+      ],
+      "@shared/*": [
+        "../../src/shared/*"
+      ],
+      "@domain": [
+        "../../src/domain/index.ts"
+      ],
+      "@domain/*": [
+        "../../src/domain/*"
+      ],
+      "@infra": [
+        "../../src/infra/index.ts"
+      ],
+      "@infra/*": [
+        "../../src/infra/*"
+      ],
+      "@services": [
+        "../../src/services/index.ts"
+      ],
+      "@services/*": [
+        "../../src/services/*"
+      ]
+    },
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "incremental": true,
+    "isolatedModules": true
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "../../src/**/*.ts",
+    "../../src/**/*.tsx",
+    "next-env.d.ts",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
