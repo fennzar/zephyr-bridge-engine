@@ -174,6 +174,13 @@ export class EvmExecutor {
   }
 
   /**
+   * Get the network environment (local/sepolia/mainnet).
+   */
+  get networkEnv(): NetworkEnv {
+    return this.network;
+  }
+
+  /**
    * Execute a swap on Uniswap V4.
    */
   async executeSwap(params: EvmSwapParams): Promise<EvmSwapResult> {
@@ -199,17 +206,6 @@ export class EvmExecutor {
       // Build swap parameters
       const deadline = params.deadline ?? BigInt(Math.floor(Date.now() / 1000) + 600); // 10 min default
 
-      // Encode swap call data
-      const swapParams = {
-        poolKey,
-        zeroForOne,
-        amountSpecified: params.amountIn,
-        sqrtPriceLimitX96: zeroForOne
-          ? 4295128740n // MIN_SQRT_RATIO + 1
-          : 1461446703485210103287273052203988822378723970341n, // MAX_SQRT_RATIO - 1
-        hookData: "0x" as Hex,
-      };
-
       // Approve token if needed
       const tokenAddress = getTokenAddress(params.fromAsset, this.network);
       if (tokenAddress) {
@@ -224,22 +220,24 @@ export class EvmExecutor {
         );
       }
 
-      // Build the swap call data
+      // Build the swap call data using swapExactTokensForTokens
       const swapCallData = encodeFunctionData({
         abi: SWAP_ROUTER_ABI,
-        functionName: "swap",
+        functionName: "swapExactTokensForTokens",
         args: [
+          params.amountIn,
+          params.amountOutMin,
+          zeroForOne,
           {
-            currency0: swapParams.poolKey.currency0,
-            currency1: swapParams.poolKey.currency1,
-            fee: swapParams.poolKey.fee,
-            tickSpacing: swapParams.poolKey.tickSpacing,
-            hooks: swapParams.poolKey.hooks,
+            currency0: poolKey.currency0,
+            currency1: poolKey.currency1,
+            fee: poolKey.fee,
+            tickSpacing: poolKey.tickSpacing,
+            hooks: poolKey.hooks,
           },
-          swapParams.zeroForOne,
-          swapParams.amountSpecified,
-          swapParams.sqrtPriceLimitX96,
-          swapParams.hookData,
+          "0x" as Hex,
+          this.account.address,
+          deadline,
         ],
       });
 
@@ -358,6 +356,68 @@ export class EvmExecutor {
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
+        durationMs: Date.now() - startTime,
+      };
+    }
+  }
+
+  /**
+   * Call burnWithData() on a wrapped token contract to initiate an unwrap.
+   * Used by BridgeExecutor after calling the bridge API /unwraps/prepare.
+   */
+  async burnWithData(params: {
+    tokenAddress: string;
+    amount: bigint;
+    payload: Hex;
+    nonce: Hex;
+  }): Promise<VenueOperationResult> {
+    const startTime = Date.now();
+
+    try {
+      const BURN_ABI = parseAbi([
+        "function burnWithData(uint256 amount, bytes zephDestination, bytes32 nonce) external",
+      ]);
+
+      // Ensure nonce is a full bytes32 (pad to 32 bytes if needed)
+      const nonceBytes32 = params.nonce.length < 66
+        ? `0x${params.nonce.replace("0x", "").padStart(64, "0")}` as Hex
+        : params.nonce;
+
+      const callData = encodeFunctionData({
+        abi: BURN_ABI,
+        functionName: "burnWithData",
+        args: [params.amount, params.payload, nonceBytes32],
+      });
+
+      const hash = await this.walletClient.sendTransaction({
+        to: getAddress(params.tokenAddress),
+        data: callData,
+        account: this.account,
+        chain: chainFromKey(this.network),
+      });
+
+      const receipt = await this.publicClient.waitForTransactionReceipt({ hash });
+
+      if (receipt.status === "reverted") {
+        return {
+          success: false,
+          txHash: hash,
+          error: "burnWithData transaction reverted",
+          durationMs: Date.now() - startTime,
+          gasUsed: receipt.gasUsed,
+        };
+      }
+
+      return {
+        success: true,
+        txHash: hash,
+        durationMs: Date.now() - startTime,
+        gasUsed: receipt.gasUsed,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "burnWithData failed",
         durationMs: Date.now() - startTime,
       };
     }
@@ -574,7 +634,7 @@ export class EvmExecutor {
 // ============================================================
 
 const SWAP_ROUTER_ABI = parseAbi([
-  "function swap((address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) poolKey, bool zeroForOne, int256 amountSpecified, uint160 sqrtPriceLimitX96, bytes hookData) external returns (int128 amount0, int128 amount1)",
+  "function swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, bool zeroForOne, (address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) poolKey, bytes hookData, address receiver, uint256 deadline) external payable returns (int256)",
 ]);
 
 const BRIDGE_ABI = parseAbi([

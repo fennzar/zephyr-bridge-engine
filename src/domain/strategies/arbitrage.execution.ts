@@ -65,28 +65,26 @@ export function buildExecutionSteps(
     }
   }
 
-  // Bridge step: wrap or unwrap depending on direction
-  // For evm_discount: we buy on EVM, need to unwrap to native for close
-  // For evm_premium: we sell on EVM, need native input (assume we have it)
-  if (leg.direction === "evm_discount") {
-    // After buying WZEPH/WZSD/etc on EVM, unwrap to native
-    const openResult = leg.open[leg.open.length - 1]?.to;
-    if (openResult?.endsWith(".e")) {
-      const nativeAsset = openResult.replace("W", "").replace(".e", ".n") as typeof openResult;
-      // Bridge is ~1:1 minus bridge fee (~1%)
-      const bridgeFee = state?.bridge?.unwrap.bridgeFee ?? 0.01;
-      const bridgeOut = currentAmount - BigInt(Math.floor(Number(currentAmount) * bridgeFee));
-      steps.push({
-        planStepId: `${planId}-unwrap-${stepIndex++}`,
-        op: "unwrap",
-        from: openResult,
-        to: nativeAsset,
-        amountIn: currentAmount,
-        expectedAmountOut: bridgeOut,
-        venue: "evm",
-      });
-      currentAmount = bridgeOut;
-    }
+  // Bridge step: unwrap EVM asset to native if close steps need native input.
+  // Applies to both directions when the open step produces an EVM asset (.e)
+  // and the close step expects a native asset (.n).
+  const openResult = leg.open[leg.open.length - 1]?.to;
+  const closeInput = closeSteps[0]?.from;
+  if (openResult?.endsWith(".e") && closeInput?.endsWith(".n")) {
+    const nativeAsset = openResult.replace("W", "").replace(".e", ".n") as typeof openResult;
+    // Bridge is ~1:1 minus bridge fee (~1%)
+    const bridgeFee = state?.bridge?.unwrap.bridgeFee ?? 0.01;
+    const bridgeOut = currentAmount - BigInt(Math.floor(Number(currentAmount) * bridgeFee));
+    steps.push({
+      planStepId: `${planId}-unwrap-${stepIndex++}`,
+      op: "unwrap",
+      from: openResult,
+      to: nativeAsset,
+      amountIn: currentAmount,
+      expectedAmountOut: bridgeOut,
+      venue: "evm",
+    });
+    currentAmount = bridgeOut;
   }
 
   // Close steps (native conversion or CEX trade)
@@ -201,7 +199,7 @@ export function lookupSwapContext(
         poolAddress: pool.address,
         token0: pool.base,
         token1: pool.quote,
-        fee: pool.feeBps * 100,
+        fee: pool.feeBps, // Already in V4 fee units (e.g. 3000 = 0.30%)
         tickSpacing: pool.tickSpacing ?? 60,
         hooks: "0x0000000000000000000000000000000000000000",
       };

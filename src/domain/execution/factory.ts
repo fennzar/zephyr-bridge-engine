@@ -65,7 +65,7 @@ export function createZephyrWalletClient(): ZephyrWalletClient {
  * Create a bridge API client for interacting with the bridge-api service.
  */
 export function createBridgeApiClient(): BridgeApiClient {
-  const url = env.BRIDGE_API_URL ?? "http://localhost:5557";
+  const url = env.BRIDGE_API_URL ?? "http://localhost:7051";
   return new BridgeApiClient(url);
 }
 
@@ -76,7 +76,8 @@ export function createBridgeExecutor(
   zephyrWallet: ZephyrWalletClient,
   evmExecutor: EvmExecutor,
 ): BridgeExecutor {
-  return new BridgeExecutor(zephyrWallet, evmExecutor);
+  const bridgeApi = createBridgeApiClient();
+  return new BridgeExecutor(zephyrWallet, evmExecutor, bridgeApi);
 }
 
 /**

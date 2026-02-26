@@ -110,7 +110,7 @@ async function executeEvmSwap(
         key: `${step.from}-${step.to}`,
         base: step.from,
         quote: step.to,
-        feeBps: step.swapContext.fee / 100, // Uniswap fee units -> bps
+        feeBps: step.swapContext.fee, // Already in V4 fee units (feeBps is misnamed)
         baseDecimals: 18,
         quoteDecimals: 18,
         address: step.swapContext.poolAddress,

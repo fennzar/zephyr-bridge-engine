@@ -58,7 +58,7 @@ export function buildPoolKeyFromPool(pool: EvmPool, network: NetworkEnv) {
   return {
     currency0: getAddress(currency0),
     currency1: getAddress(currency1),
-    fee: pool.feeBps * 100, // Convert bps to Uniswap fee units
+    fee: pool.feeBps, // Already in Uniswap V4 fee units (e.g. 3000 = 0.30%)
     tickSpacing: pool.tickSpacing ?? 60,
     hooks: getAddress("0x0000000000000000000000000000000000000000"),
   };

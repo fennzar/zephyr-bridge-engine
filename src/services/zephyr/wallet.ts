@@ -89,6 +89,20 @@ interface PricingResult {
   expected_amount: string;
 }
 
+/**
+ * Map conversion method names to (source_asset, destination_asset) pairs.
+ * The Zephyr wallet uses a single "transfer" RPC method for all conversions,
+ * distinguished by source_asset/destination_asset parameters.
+ */
+const CONVERSION_ASSETS: Record<string, { source: string; destination: string }> = {
+  mint_stable:   { source: "ZPH", destination: "ZSD" },
+  redeem_stable: { source: "ZSD", destination: "ZPH" },
+  mint_reserve:  { source: "ZPH", destination: "ZRS" },
+  redeem_reserve:{ source: "ZRS", destination: "ZPH" },
+  mint_yield:    { source: "ZSD", destination: "ZYS" },
+  redeem_yield:  { source: "ZYS", destination: "ZSD" },
+};
+
 const HEADERS: HeadersInit = {
   "Content-Type": "application/json",
   Accept: "application/json",
@@ -315,14 +329,36 @@ export class ZephyrWalletClient {
 
   /**
    * Internal conversion method.
+   * Uses the "transfer" RPC with source_asset/destination_asset to convert
+   * between asset types (e.g., ZSD→ZPH for redeem_stable).
+   * Sends to own address since conversions are self-transfers.
    */
   private async doConversion(
     method: string,
     amount: bigint,
   ): Promise<ZephyrTxResult> {
+    const assets = CONVERSION_ASSETS[method];
+    if (!assets) {
+      return { success: false, error: `Unknown conversion type: ${method}` };
+    }
+
     try {
-      const result = await walletRpc<TransferResult>(method, {
-        amount: amount.toString(),
+      // Get own address — conversions send to self
+      const { address } = await walletRpc<{ address: string }>("get_address", { account_index: 0 });
+
+      // Zephyr wallet enforces max 4 decimal places for mint/redeem.
+      // With 12-decimal atomic units, truncate to nearest 10^8.
+      // Ensure amount is BigInt (may be string after JSON deserialization).
+      const amountBn = typeof amount === "bigint" ? amount : BigInt(amount);
+      const PRECISION_MASK = 100_000_000n; // 10^8
+      const truncatedAmount = (amountBn / PRECISION_MASK) * PRECISION_MASK;
+
+      const result = await walletRpc<TransferResult>("transfer", {
+        destinations: [{ amount: truncatedAmount.toString(), address }],
+        source_asset: assets.source,
+        destination_asset: assets.destination,
+        priority: 0,
+        ring_size: 2,
         get_tx_key: true,
       });
 

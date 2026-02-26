@@ -1,9 +1,14 @@
 import type { AssetId } from "@domain/types";
 import type { VenueOperationResult } from "@domain/execution";
-import { getTimingConfig, applyDelay } from "@domain/execution";
+import { applyDelay } from "@domain/execution";
+import { createLogger } from "@shared/logger";
 
 import { ZephyrWalletClient, type ZephyrTxResult } from "@services/zephyr/wallet";
 import { EvmExecutor } from "@services/evm/executor";
+import { BridgeApiClient } from "./apiClient";
+import { getTokenAddress } from "@services/evm/tokenUtils";
+
+const log = createLogger("BridgeExec");
 
 /**
  * Native asset types that can be bridged.
@@ -99,15 +104,18 @@ export interface BridgeResult extends VenueOperationResult {
 export class BridgeExecutor {
   private zephyrWallet: ZephyrWalletClient;
   private evmExecutor: EvmExecutor;
+  private bridgeApi: BridgeApiClient;
   private simulateTiming: boolean;
 
   constructor(
     zephyrWallet: ZephyrWalletClient,
     evmExecutor: EvmExecutor,
+    bridgeApi?: BridgeApiClient,
     options?: { simulateTiming?: boolean },
   ) {
     this.zephyrWallet = zephyrWallet;
     this.evmExecutor = evmExecutor;
+    this.bridgeApi = bridgeApi ?? new BridgeApiClient();
     this.simulateTiming = options?.simulateTiming ?? false;
   }
 
@@ -115,35 +123,41 @@ export class BridgeExecutor {
    * Wrap native assets to EVM (Native -> EVM).
    *
    * Flow:
-   * 1. Send native assets to bridge address with EVM address as payment ID
-   * 2. Wait for bridge confirmations (if timing enabled)
-   * 3. Return voucher ID for claiming on EVM side
+   * 1. Get bridge subaddress for the EVM address via bridge API
+   * 2. Send native assets to that subaddress (no payment ID needed)
+   * 3. Bridge watcher detects deposit and issues a claimable voucher
    */
   async wrap(params: WrapParams): Promise<BridgeResult> {
     const startTime = Date.now();
 
     try {
-      // Step 1: Send to bridge from native wallet
-      const txResult = await this.zephyrWallet.wrapToEvm(
-        params.asset,
-        params.amount,
-        params.evmAddress,
-      );
+      // Step 1: Get bridge subaddress for our EVM address
+      log.info(`Getting bridge subaddress for ${params.evmAddress}`);
+      const bridgeSubaddress = await this.bridgeApi.createBridgeAccount(params.evmAddress);
+      log.info(`Bridge subaddress: ${bridgeSubaddress.slice(0, 20)}...`);
+
+      // Step 2: Send native asset to bridge subaddress
+      const txResult = await this.zephyrWallet.transfer({
+        address: bridgeSubaddress,
+        amount: typeof params.amount === "bigint" ? params.amount : BigInt(params.amount),
+        assetType: params.asset,
+      });
 
       if (!txResult.success) {
         return {
           success: false,
-          error: txResult.error ?? "Failed to initiate wrap on native side",
+          error: txResult.error ?? "Failed to send to bridge subaddress",
           durationMs: Date.now() - startTime,
         };
       }
 
-      // Step 2: Simulate bridge confirmation time if enabled
+      log.info(`Wrap tx sent: ${txResult.txHash}`);
+
+      // Step 3: Simulate bridge confirmation time if enabled
       if (this.simulateTiming) {
         await applyDelay("bridgeConfirmations");
       }
 
-      // Step 3: Generate voucher ID (in reality, this comes from the bridge)
       const voucherId = this.generateVoucherId(txResult.txHash ?? "");
 
       return {
@@ -166,15 +180,15 @@ export class BridgeExecutor {
    * Unwrap EVM assets to native (EVM -> Native).
    *
    * Flow:
-   * 1. Burn wrapped tokens on EVM with native destination address
-   * 2. Wait for bridge processing (if timing enabled)
-   * 3. Funds appear on native side (minus bridge fee)
+   * 1. Call bridge API /unwraps/prepare to pre-sign the Zephyr transfer
+   * 2. Call burnWithData() on the wrapped token contract
+   * 3. Bridge watcher detects burn, relays the pre-signed tx
+   * 4. Funds appear on native side (minus bridge fee)
    */
   async unwrap(params: UnwrapParams): Promise<BridgeResult> {
     const startTime = Date.now();
 
     try {
-      // Convert wrapped asset to native asset ID format
       const nativeAsset = WRAPPED_TO_NATIVE[params.asset];
       if (!nativeAsset) {
         return {
@@ -184,27 +198,48 @@ export class BridgeExecutor {
         };
       }
 
-      // Step 1: Burn on EVM
-      const burnResult = await this.evmExecutor.unwrapToNative({
-        asset: params.asset,
+      // Resolve the token contract address
+      const tokenAddress = getTokenAddress(params.asset, this.evmExecutor.networkEnv);
+      if (!tokenAddress) {
+        return {
+          success: false,
+          error: `Token address not found for ${params.asset}`,
+          durationMs: Date.now() - startTime,
+        };
+      }
+
+      // Step 1: Prepare unwrap via bridge API (pre-signs Zephyr transfer)
+      log.info(`Preparing unwrap: ${params.asset} amount=${params.amount} dest=${params.nativeAddress}`);
+      const prepared = await this.bridgeApi.prepareUnwrap({
+        token: tokenAddress,
+        amountWei: params.amount.toString(),
+        destination: params.nativeAddress,
+      });
+      log.info(`Unwrap prepared: txHash=${prepared.txHash} netWei=${prepared.netWei}`);
+
+      // Step 2: Call burnWithData() on the token contract
+      const burnResult = await this.evmExecutor.burnWithData({
+        tokenAddress,
         amount: params.amount,
-        destinationAddress: params.nativeAddress,
+        payload: prepared.payload as `0x${string}`,
+        nonce: prepared.txHash as `0x${string}`,
       });
 
       if (!burnResult.success) {
         return {
           success: false,
-          error: burnResult.error ?? "Failed to burn wrapped tokens",
+          error: burnResult.error ?? "burnWithData failed",
           evmTxHash: burnResult.txHash,
           durationMs: Date.now() - startTime,
           gasUsed: burnResult.gasUsed,
         };
       }
 
-      // Step 2: Simulate bridge processing time if enabled
+      log.info(`Burn success: txHash=${burnResult.txHash}`);
+
+      // Step 3: Wait for bridge watcher to process and relay
       if (this.simulateTiming) {
         await applyDelay("bridgeConfirmations");
-        // Also need to wait for Zephyr unlock time
         await applyDelay("zephyrUnlock");
       }
 
@@ -319,8 +354,9 @@ export class BridgeExecutor {
 export function createBridgeExecutor(
   zephyrWallet: ZephyrWalletClient,
   evmExecutor: EvmExecutor,
+  bridgeApi?: BridgeApiClient,
   options?: { simulateTiming?: boolean },
 ): BridgeExecutor {
-  return new BridgeExecutor(zephyrWallet, evmExecutor, options);
+  return new BridgeExecutor(zephyrWallet, evmExecutor, bridgeApi, options);
 }
 

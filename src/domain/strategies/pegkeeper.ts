@@ -260,7 +260,7 @@ export class PegKeeperStrategy implements Strategy {
           poolAddress: pool.address,
           token0: pool.base,   // AssetId for now; live mode needs contract addresses
           token1: pool.quote,  // AssetId for now
-          fee: pool.feeBps * 100, // feeBps -> Uniswap fee units
+          fee: pool.feeBps, // Already in V4 fee units (e.g. 3000 = 0.30%)
           tickSpacing: pool.tickSpacing ?? 60,
           hooks: "0x0000000000000000000000000000000000000000",
         };
