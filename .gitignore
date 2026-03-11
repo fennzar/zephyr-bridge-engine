@@ -49,3 +49,9 @@ data/paper-balances.json
 **/__structure.review.md
 scripts/seed-devnet.sh
 CLAUDE.md
+
+# Generated address configs (written by bridge-orchestration sync-env.sh)
+src/services/evm/config/addresses.local.json
+
+# Stray lockfiles (use root pnpm-lock.yaml)
+apps/web/pnpm-lock.yaml
