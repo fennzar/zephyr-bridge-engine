@@ -2,46 +2,46 @@
   "version": 1,
   "chainId": 31337,
   "contracts": {
-    "poolManager": "0xdd52f9a2004128c8a5C5bA593c07Ef676f1340cA",
-    "positionManager": "0x4630B2283B31ff7B6cFF343969dBbDCE537c75A3",
-    "stateView": "0x2014C0a03A98d1fF6Cb0c2C232691988c927d73A",
-    "v4Quoter": "0x731D3E9d776E7ebD2d42F08A3dD8eAa9292047f2",
-    "swapRouter": "0x5eD0Aa5c9AdcB695D6Abfbb7Bf2C0dBa8Ab3a536",
+    "poolManager": "0x6F93F67A966dfe3c1E767a3866CdC66c3B3Dc9BB",
+    "positionManager": "0x77d1d499f91E65e2D08f311e679307fbfd4d0098",
+    "stateView": "0x5E8399d0dB83a52eEf794A22596F257e3d615692",
+    "v4Quoter": "0x33418c4bc5a265FCb81cff8A31301AdF2C377C89",
+    "swapRouter": "0x41F61F56849A4fca335352e46a51AFb01f7b2428",
     "permit2": "0x3191Fc1E303EF4e12a7DE5f5d2e8d53A0660c5b9"
   },
   "tokens": {
     "USDC": {
-      "address": "0x4d0681a4f0fc30ac6db1b67ceffd1518ab72c1c2",
+      "address": "0x1bb8f374c7c9db09830a7190dfec221b883397ae",
       "decimals": 6,
       "symbol": "USDC",
       "name": "USD Coin"
     },
     "USDT": {
-      "address": "0x43f199beb63c7e95cafcc6b3389074de016da44f",
+      "address": "0x8ca0363e768790697ea8005aae2bdef1deb5475e",
       "decimals": 6,
       "symbol": "USDT",
       "name": "Tether USD"
     },
     "wZEPH": {
-      "address": "0x713902cde9d7751cc08e43dc07b57a01dbbad55e",
+      "address": "0x72d200d837a3806794978043f7f933d4e70d2649",
       "decimals": 12,
       "symbol": "WZEPH",
       "name": "Wrapped Zephyr"
     },
     "wZSD": {
-      "address": "0x1122feeb2f1f98da32c82e70b68e26c1bd71bc3e",
+      "address": "0x82f6727c3a515ef2d17e2d20f990dfb276da7f9e",
       "decimals": 12,
       "symbol": "WZSD",
       "name": "Wrapped Zephyr Stable Dollar"
     },
     "wZRS": {
-      "address": "0xc6888130ccd98f77b66b40fcdcdb48966f954cfa",
+      "address": "0x291d9b245cc6ffb0c7f6ae3920e6f01344fb0e28",
       "decimals": 12,
       "symbol": "WZRS",
       "name": "Wrapped Zephyr Reserve Stable"
     },
     "wZYS": {
-      "address": "0x753a151c0881fc7eec4f28c166fe660330ec9fba",
+      "address": "0xc6a347c23e05a8f9d10211849a83523d08b150d2",
       "decimals": 12,
       "symbol": "WZYS",
       "name": "Wrapped Zephyr Yield Stable"
@@ -66,31 +66,31 @@
         "quoteSymbol": "wZSD"
       },
       "wZRS-wZEPH": {
-        "totalQuoteHuman": "20000",
+        "totalQuoteHuman": "15000",
         "quoteSymbol": "wZEPH"
       }
     },
     "wrapAmounts": {
-      "ZPH": 60000,
+      "ZPH": 45000,
       "ZSD": 140000,
-      "ZRS": 53333,
-      "ZYS": 39376
+      "ZRS": 39182,
+      "ZYS": 39590
     },
     "funding": {
-      "ZPH": 71666,
+      "ZPH": 55000,
       "ZSD": 155000,
-      "ZRS": 71666,
-      "ZYS": 54220,
+      "ZRS": 53977,
+      "ZYS": 54487,
       "USDT": 60000,
       "USDC": 10000
     },
-    "cexZeph": 6666,
+    "cexZeph": 5000,
     "inventory": 10000,
     "usdPrices": {
-      "ZEPH": 1.5,
+      "ZEPH": 2.0,
       "ZSD": 1.0,
-      "ZRS": 0.75,
-      "ZYS": 1.0158
+      "ZRS": 1.0209,
+      "ZYS": 1.0103
     }
   },
   "pools": [
@@ -124,7 +124,7 @@
           ]
         }
       },
-      "address": "0xed3db7d8124db3b7a3590e97a62337745c4a5afc67ed65fbae7a20afcacf08a2"
+      "address": "0xf3349378854aa22304eb144f8ab600f851f824d1bbeb48e3e1d8c1ad67eebdf8"
     },
     {
       "id": "wZSD-USDT",
@@ -156,7 +156,7 @@
           ]
         }
       },
-      "address": "0xf6236e1d6737751ad286b1e14fc9ed0ee73adf1b8056fbaf8cc53d3278185d14"
+      "address": "0xbbbfe85d06973e1cb69a758e3d875c9fdc1647b44966d1cfab0dbe3730209927"
     },
     {
       "id": "wZYS-wZSD",
@@ -171,7 +171,7 @@
         "pricing": {
           "base": "wZYS",
           "quote": "wZSD",
-          "price": "1.0158"
+          "price": "1.0103"
         },
         "budget": {
           "quoteSymbol": "wZSD",
@@ -188,7 +188,7 @@
           ]
         }
       },
-      "address": "0xbf6a6cd79120f5ea5adce9fa8ae4b425d6bc0c6c4fcf43bd85dc214a01085b4f"
+      "address": "0xc49a38c7f18198095162d82f3a60008b3aa91e871db89a61ded04f654a65d3ca"
     },
     {
       "id": "wZEPH-wZSD",
@@ -203,7 +203,7 @@
         "pricing": {
           "base": "wZEPH",
           "quote": "wZSD",
-          "price": "1.5000"
+          "price": "2.0000"
         },
         "budget": {
           "quoteSymbol": "wZSD",
@@ -224,7 +224,7 @@
           ]
         }
       },
-      "address": "0xc946c2fc0d77db62e741b041fc8df97dda5c68124baa19c7fba655d5a65ac5db"
+      "address": "0x976dcc40ef0ef72ade40866b4417431b6f856231615883a919a0cf0f17e2ec06"
     },
     {
       "id": "wZRS-wZEPH",
@@ -239,11 +239,11 @@
         "pricing": {
           "base": "wZRS",
           "quote": "wZEPH",
-          "price": "0.5000"
+          "price": "0.5104"
         },
         "budget": {
           "quoteSymbol": "wZEPH",
-          "totalQuoteHuman": "20000",
+          "totalQuoteHuman": "15000",
           "positions": [
             {
               "pct": 40,
@@ -260,7 +260,7 @@
           ]
         }
       },
-      "address": "0xc8d101839fd8d1a89d077601340f16bb9ce68054b2baabf54ab93435b7cc8dee"
+      "address": "0xfbb6c620ad638b39c1ce3ca53e394c70cefdac39b17a69a3daf6c44c0c3b4e9e"
     }
   ]
 }
