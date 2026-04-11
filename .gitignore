@@ -49,6 +49,7 @@ data/paper-balances.json
 **/__structure.review.md
 scripts/seed-devnet.sh
 CLAUDE.md
+docs/private_docs/
 
 # Generated address configs (written by bridge-orchestration sync-env.sh)
 src/services/evm/config/addresses.local.json
