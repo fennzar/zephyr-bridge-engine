@@ -2,6 +2,7 @@ import WebSocket, { type RawData, type ErrorEvent } from 'ws';
 import { EventEmitter } from 'eventemitter3';
 
 import { decodeMexcPush, type MexcPushMessage } from './parser';
+import { FAKE_ORDERBOOK_ENABLED, resolveMexcWsUrl } from './fakeOrderbook';
 
 export type MexcWsBookTickerEvent = {
   type: 'bookTicker';
@@ -46,11 +47,7 @@ export type MexcWsOptions = {
   dealsInterval?: string;
 };
 
-const FAKE_ORDERBOOK_ENABLED = process.env.FAKE_ORDERBOOK_ENABLED === 'true';
-const FAKE_ORDERBOOK_PORT = process.env.FAKE_ORDERBOOK_PORT || '5556';
-const DEFAULT_WS_URL = FAKE_ORDERBOOK_ENABLED
-  ? `ws://127.0.0.1:${FAKE_ORDERBOOK_PORT}`
-  : 'wss://wbs-api.mexc.com/ws';
+const DEFAULT_WS_URL = resolveMexcWsUrl();
 
 export class MexcWs extends EventEmitter<{
   event: [MexcWsEvent];

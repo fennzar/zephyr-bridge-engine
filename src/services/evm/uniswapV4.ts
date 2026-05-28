@@ -7,7 +7,7 @@ import {
   type Position as DbPosition,
   type Token as DbToken,
 } from "@infra";
-import type { NetworkEnv } from "@shared";
+import { env as appEnv, type NetworkEnv } from "@shared";
 
 import { getNetworkConfig } from "./config";
 
@@ -106,9 +106,10 @@ export type PoolDiscoverySummary = {
 };
 
 function resolveEnv(): NetworkEnv {
-  const raw = process.env.ZEPHYR_ENV?.toLowerCase();
-  if (raw === "sepolia" || raw === "mainnet") return raw;
-  return "local";
+  // appEnv.ZEPHYR_ENV is the validated NetworkEnv enum (default "local");
+  // loadEnv rejects any non-canonical value at import. Aliased as appEnv
+  // because this module uses `env` locally for the resolved network value.
+  return appEnv.ZEPHYR_ENV;
 }
 
 function readNumber(value: unknown): number | undefined {

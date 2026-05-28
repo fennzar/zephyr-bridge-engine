@@ -54,13 +54,6 @@ export function formatToken(amount: unknown, symbol: string, digits = 4): string
   return `${numeric.toLocaleString(undefined, { maximumFractionDigits: digits })} ${symbol}`;
 }
 
-export function formatRateWithUnitAndUsd(rate: unknown, unit: string, usd: unknown): string {
-  const rateNumeric = toFiniteNumber(rate);
-  const usdNumeric = toFiniteNumber(usd);
-  if (rateNumeric == null || usdNumeric == null) return "—";
-  return `${formatNumber(rateNumeric, 6)} ${unit} (${formatCurrency(usdNumeric)})`;
-}
-
 export function formatSignedRateWithUnit(delta: unknown, unit: string): string {
   const numeric = toFiniteNumber(delta);
   if (numeric == null) return `— ${unit}`;

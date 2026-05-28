@@ -7,6 +7,7 @@ import type { Venue, OpType, AssetId } from "@domain/types";
 import type { EvmPool } from "@domain/state/types";
 import { prisma, PoolProtocol } from "@infra";
 
+import { env } from "@shared";
 import { createLogger } from "@shared/logger";
 
 import type {
@@ -354,8 +355,8 @@ export class LPManagerStrategy implements Strategy {
   // ============================================================
 
   private async loadPositions(state: GlobalState): Promise<LPPosition[]> {
-    // Get owner address from environment
-    const owner = process.env.EVM_WALLET_ADDRESS?.toLowerCase();
+    // Get owner address from environment (validated 0x-address or undefined).
+    const owner = env.EVM_WALLET_ADDRESS?.toLowerCase();
     if (!owner) {
       log.warn("No EVM_WALLET_ADDRESS configured");
       return [];

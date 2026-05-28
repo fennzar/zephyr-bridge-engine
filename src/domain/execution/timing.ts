@@ -65,9 +65,10 @@ const INSTANT_DELAYS: TimingDelays = {
  * Resolve timing mode from environment.
  */
 function resolveTimingMode(): TimingMode {
-  const envValue = process.env.EXECUTION_TIMING?.toLowerCase();
-  if (envValue === "realistic") return "realistic";
-  return "instant";
+  // env.EXECUTION_TIMING is the validated enum ("instant" | "realistic",
+  // default "instant") — loadEnv rejects any other value at import, so no
+  // raw-string normalization is needed here.
+  return env.EXECUTION_TIMING;
 }
 
 /**

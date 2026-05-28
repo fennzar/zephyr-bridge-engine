@@ -156,12 +156,3 @@ export class ExecutionEngine {
   }
 }
 
-/**
- * Create an execution engine with the provided venue executors.
- */
-export function createExecutionEngine(
-  executors: VenueExecutors,
-  context?: Partial<ExecutionContext>,
-): ExecutionEngine {
-  return new ExecutionEngine(executors, context);
-}

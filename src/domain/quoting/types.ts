@@ -88,15 +88,3 @@ export interface CexTradeImpact {
 export interface QuoteContext {
   state: GlobalState;
 }
-
-export interface RouteQuoteRequest {
-  context: QuoteContext;
-  legs: OperationQuoteRequest[];
-}
-
-export interface RouteQuoteBreakdown {
-  legs: OperationQuoteResponse[];
-  totalIn: bigint;
-  totalOut: bigint;
-  notes?: string[];
-}

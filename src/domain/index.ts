@@ -1,5 +1,4 @@
 export * from './types';
-export * from './paper';
 export * from './zephyr';
 export * from './arbitrage';
 export * from './pathing';

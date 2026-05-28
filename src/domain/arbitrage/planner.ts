@@ -474,7 +474,7 @@ export async function evaluateBestPath(
   return result.paths[0] ?? null;
 }
 
-export function buildPathNotes(evaluation: PathEvaluation): string[] {
+function buildPathNotes(evaluation: PathEvaluation): string[] {
   const notes: string[] = [];
   if (!evaluation.score.allowed) {
     notes.push(...collectDisallowReasons(evaluation).map((reason) => `Blocked: ${reason}`));

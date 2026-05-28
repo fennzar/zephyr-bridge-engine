@@ -54,10 +54,6 @@ export interface ArbPlannerOptions {
   pathLimit?: number;
 }
 
-export interface ArbPlanContext {
-  legs: ArbLegs[];
-}
-
 export interface InventoryRequirement {
   asset: AssetId;
   required: number;

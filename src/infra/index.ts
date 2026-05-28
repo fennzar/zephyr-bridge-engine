@@ -62,10 +62,6 @@ export type {
 export type PoolProtocol = PoolProtocolType;
 export type TransactionClient = Prisma.TransactionClient;
 
-export function createPrismaClient(): PrismaClient {
-  return createClientInstance();
-}
-
 export async function withTransaction<T>(handler: (tx: TransactionClient) => Promise<T>): Promise<T> {
   return prisma.$transaction(async (tx) => handler(tx));
 }

@@ -1,5 +1,7 @@
 import fetch from 'cross-fetch';
 
+import { resolveMexcRestBaseUrl } from './fakeOrderbook';
+
 export type MexcDepthLevel = {
   price: number;
   qty: number;
@@ -29,11 +31,7 @@ export type MexcDepthSummary = {
   generatedAt: string;
 };
 
-const FAKE_ORDERBOOK_ENABLED = process.env.FAKE_ORDERBOOK_ENABLED === 'true';
-const FAKE_ORDERBOOK_PORT = process.env.FAKE_ORDERBOOK_PORT || '5556';
-const DEFAULT_BASE_URL = FAKE_ORDERBOOK_ENABLED
-  ? `http://127.0.0.1:${FAKE_ORDERBOOK_PORT}`
-  : 'https://api.mexc.com';
+const DEFAULT_BASE_URL = resolveMexcRestBaseUrl();
 
 function normaliseLevels(levels: Array<[string, string]>): MexcDepthLevel[] {
   return levels.map(([priceRaw, qtyRaw]) => {

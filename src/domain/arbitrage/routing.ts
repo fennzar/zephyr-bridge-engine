@@ -15,7 +15,6 @@ import type { AssetId, OpType } from "@domain/types";
  * helper `materializeLeg` will insert implied wrap/unwrap/deposit/withdraw as needed.
  */
 export type ArbDirection = "evm_discount" | "evm_premium";
-export type CloseFlavor = "native" | "cex";
 
 export interface SemanticStep {
   from: AssetId;
@@ -189,10 +188,6 @@ export function buildLegPreparationPlan(leg: ArbLegs, options?: PreparationOptio
       ...(leg.close.cex ? { cex: buildStepPreparations(leg.close.cex, forbidden, options) } : {}),
     },
   };
-}
-
-export function buildAllPreparationPlans(options?: PreparationOptions): LegPreparationPlan[] {
-  return ARB_DEFS.map((leg) => buildLegPreparationPlan(leg, options));
 }
 
 export function findArbLeg(asset: ArbLegs["asset"], direction: ArbDirection): ArbLegs | null {

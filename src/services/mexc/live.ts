@@ -13,7 +13,6 @@ import type {
   MexcEvent,
 } from "./client";
 import { MexcRest } from "./rest";
-import { getCexWalletClient } from "../cex/client";
 
 /**
  * Live implementation of IMexcClient using real MEXC API.
@@ -160,17 +159,4 @@ export class MexcLiveClient implements IMexcClient {
   }
 }
 
-/**
- * Factory function to create MEXC client based on execution mode.
- *
- * - paper/devnet: Uses CexWalletClient backed by real CEX wallets.
- * - live: Uses MexcLiveClient which calls real MEXC API (unless MEXC_PAPER override).
- */
-export function createMexcClient(mode?: ExecutionMode): IMexcClient {
-  if (mode === "live" && !env.MEXC_PAPER) {
-    return new MexcLiveClient();
-  }
-
-  return getCexWalletClient(mode);
-}
 
