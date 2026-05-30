@@ -3,6 +3,15 @@ import { mainnet, sepolia } from "viem/chains";
 
 export type ChainKey = "local" | "sepolia" | "mainnet";
 
+// Local devnet chainId is configurable (collision-free 271337 dev / 271338 testnet-v2).
+// Read it from env so signed txs carry the chainId the Anvil node actually runs on —
+// hardcoding 31337 here caused "invalid chain id for signer" once the devnet moved off 31337.
+function localChainId(): number {
+  const raw = process.env.EVM_CHAIN_ID_LOCAL ?? process.env.EVM_CHAIN_ID;
+  const n = raw ? Number(raw) : NaN;
+  return Number.isFinite(n) && n > 0 ? n : 271337;
+}
+
 export function chainFromKey(key: ChainKey) {
   switch (key) {
     case "mainnet":
@@ -11,7 +20,7 @@ export function chainFromKey(key: ChainKey) {
       return sepolia;
     case "local":
     default:
-      return { ...sepolia, id: 31337, name: "anvil", rpcUrls: { default: { http: ["http://127.0.0.1:8545"] } } };
+      return { ...sepolia, id: localChainId(), name: "anvil", rpcUrls: { default: { http: ["http://127.0.0.1:8545"] } } };
   }
 }
 
